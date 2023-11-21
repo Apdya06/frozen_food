@@ -5,8 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 
 class Brands extends Model{
-    protected $fillable= array(
-        'manufacturer_name', 'origin','brand_name','product_name',
-        'product_code', 'category','shelf_life', 'price', 'stock', 'rating'
-    );
+    protected $fillable= [
+        'user_id','brand_name','product_name',
+        'category', 'origin', 'price', 'stock'
+    ];
 }

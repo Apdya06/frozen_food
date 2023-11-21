@@ -16,6 +16,9 @@ return new class extends Migration
             $table->string('name', 100);
             $table->string('email', 100)->unique('email_unique');
             $table->string('password', 100);
+            $table->string('address',100);
+            $table->string('phone',100);
+            $table->enum('gender', ['male', 'female']);
             $table->timestamps();
         });
     }

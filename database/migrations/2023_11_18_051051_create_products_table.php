@@ -13,16 +13,13 @@ return new class extends Migration
     {
         Schema::create('products', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->string('manufacturer_name', 100)->unique();
-            $table->enum('origin', array('lokal', 'import'))->default('lokal');
+            $table->integer('user_id')->index('user_id_foreign');
             $table->string('brand_name', 100);
             $table->string('product_name', 100);
-            $table->string('product_code', 100);
             $table->enum('category', ['sayur', 'buah', 'olahan_ayam', 'olahan_sapi', 'seafood','frozen_misc'])->default('frozen_misc');
-            $table->enum('shelf_life', ['3 bulan', '6 bulan', '9 bulan', '12 bulan'])->default('3 bulan');
+            $table->enum('origin', array('lokal', 'import'))->default('lokal');
             $table->decimal('price', 10, 2);
-            $table->integer('stock');
-            $table->double('rating', 10)->nullable();
+            $table->integer('stock')->default(0);
             $table->timestamps();
         });
     }
