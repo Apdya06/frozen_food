@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('password', 100);
             $table->string('address',100);
             $table->string('phone',100);
-            $table->enum('gender', ['male', 'female']);
+            $table->enum('gender', ['pria', 'wanita']);
             $table->timestamps();
         });
     }
