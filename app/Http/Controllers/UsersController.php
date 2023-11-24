@@ -80,16 +80,10 @@ class UsersController extends Controller{
 
         if ($validator->fails()) return response()->json(['error' => $validator->errors()], 400);
 
-        $user = new User;
-        $user->name = $data['name'];
-        $user->email = $data['email'];
-        $user->password = app('hash')->make($data['password']);
-        $user->address = $data['address'];
-        $user->phone = $data['phone'];
-        $user->gender = $data['gender'];
-        $user->save();
-
-        return response()->json($user, 200);
+        $this->user = new User;
+        $this->user->password = app('hash')->make($data['password']);
+        $this->user->fill($data)->save();
+        return response()->json($this->user, 200);
     }
 
     public function update(Request $request, $id) {

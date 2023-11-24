@@ -94,16 +94,9 @@ class ProductsController extends Controller{
             ]);
             if ($validator->fails()) return response()->json(['error' => $validator->errors()], 400);
 
-            $product = new Products();
-            $product->user_id = $data['id'];
-            $product->brand_name = $data['brand_name'];
-            $product->product_name = $data['product_name'];
-            $product->category = $data['category'];
-            $product->origin = $data['origin'];
-            $product->price = $data['price'];
-            $product->stock = $data['stock'];
-            $product->save();
-            return response()->json($product, 200);
+            $this->product = new Products;
+            $this->product->fill($data)->save();
+            return response()->json($this->product, 200);
         }
 
         if($accHeader == 'application/xml' && $contentTypeHeader == 'application/xml') {
@@ -137,15 +130,8 @@ class ProductsController extends Controller{
 
                 return response($xmlResponse, 400)->header('Content-Type', 'application/xml');
             }
-            $product = new Products();
-            $product->user_id = $data['id'];
-            $product->brand_name = $data['brand_name'];
-            $product->product_name = $data['product_name'];
-            $product->category = $data['category'];
-            $product->origin = $data['origin'];
-            $product->price = $data['price'];
-            $product->stock = $data['stock'];
-            $product->save();
+            $this->product = new Products;
+            $this->product->fill($data)->save();
             return response($xmlString, 200)->header('Content-Type', 'application/xml');
         }
     }
@@ -162,7 +148,6 @@ class ProductsController extends Controller{
 
         $this->product = $this->model::find($id);
         if(!$this->product) {abort(404);}
-
 
         if($accHeader == 'application/json' && $contentTypeHeader == 'application/json') {
             $data = $request->all();
@@ -191,7 +176,6 @@ class ProductsController extends Controller{
             if ($validator->fails()) return response()->json(['error' => $validator->errors()], 400);
 
             $this->product->fill($data)->save();
-
             $xml = new \SimpleXMLElement('<Products/>');
             foreach ($this->product->getAttributes() as $key => $value) {
                 $xml->addChild($key, $value);
