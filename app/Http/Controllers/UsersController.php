@@ -154,4 +154,26 @@ class UsersController extends Controller{
             'expires_in' => Auth::factory()->setTTL(60)
         ], 200);
     }
+    
+    public function logout(Request $request)
+    {
+    Auth::logout();
+    return response()->json(['message' => 'Successfully logged out'], 200);
+    }
+    public function delete($id)
+    {
+        try {
+            $user = User::find($id);
+    
+            if (!$user) {
+                return response()->json(['message' => 'User not found'], 404);
+            }
+    
+            $user->delete();
+    
+            return response()->json(['message' => 'User deleted successfully'], 200);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Failed to delete user', 'error' => $e->getMessage()], 500);
+        }
+    }
 }

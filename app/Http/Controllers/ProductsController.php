@@ -77,10 +77,10 @@ class ProductsController extends Controller{
         }
 
         $authUser = Auth::user();
-
-        if($accHeader == 'application/json' && $contentTypeHeader == 'application/json') {
+// json
+        if ($accHeader == 'application/json' && $contentTypeHeader == 'application/json') {
             $data = $request->all();
-            if ($authUser->id !== (int)$data['id']) {
+            if ($authUser->id !== (int)$data['user_id']) {
                 return response()->json(['error' => 'Unauthorized action'], 401);
             }
             $validator = Validator::make($data, [
@@ -88,7 +88,7 @@ class ProductsController extends Controller{
                 'brand_name'=> 'required|string',
                 'product_name'=> 'required|string',
                 'category' => 'required|in:sayur,buah,olahan_ayam,olahan_sapi,seafood,frozen_misc',
-                'origin' => 'required|in:lokal,impor',
+                'origin' => 'required|in:lokal,import',
                 'price'=> 'required|numeric',
                 'stock' => 'required|numeric',
             ]);
@@ -98,25 +98,26 @@ class ProductsController extends Controller{
             $this->product->fill($data)->save();
             return response()->json($this->product, 200);
         }
-
-        if($accHeader == 'application/xml' && $contentTypeHeader == 'application/xml') {
-            $xmlString = $request->getContent();
-            $xml = simplexml_load_string($xmlString);
-            $data = json_decode(json_encode($xml), true);
-            if ($authUser->id !== (int)$data['id']) {
-                $xmlResponse = '<?xml version="1.0" encoding="UTF-8"?>
-                    <Error>
-                        <code>401</code>
-                        <message>Unauthorized action</message>
-                    </Error>';
-                 return response($xmlResponse, 401)->header('Content-Type', 'application/xml');
-            }
+            // xml
+            if ($accHeader == 'application/xml' && $contentTypeHeader == 'application/xml') {
+                $xmlString = $request->getContent();
+                $xml = simplexml_load_string($xmlString);
+                $data = json_decode(json_encode($xml), true);
+                if ($authUser->id !== (int)$data['user_id']) {
+                    $xmlResponse = '<?xml version="1.0" encoding="UTF-8"?>
+                        <Error>
+                            <code>401</code>
+                            <message>Unauthorized action</message>
+                        </Error>';
+                    return response($xmlResponse, 401)->header('Content-Type', 'application/xml');
+                }
+                $this->product->addXmlData($data);
             $validator = Validator::make($data, [
                 'id' => 'required|numeric|exists:users',
                 'brand_name'=> 'required|string',
                 'product_name'=> 'required|string',
                 'category' => 'required|in:sayur,buah,olahan_ayam,olahan_sapi,seafood,frozen_misc',
-                'origin' => 'required|in:lokal,impor',
+                'origin' => 'required|in:lokal,import',
                 'price'=> 'required|numeric',
                 'stock' => 'required|numeric',
             ]);
@@ -148,39 +149,62 @@ class ProductsController extends Controller{
 
         $this->product = $this->model::find($id);
         if(!$this->product) {abort(404);}
-
+        // json
         if($accHeader == 'application/json' && $contentTypeHeader == 'application/json') {
             $data = $request->all();
             $validator = Validator::make($data, [
-                'email' => 'required|email|exists:users',
-                'password' => 'required',
-                'address'=> 'required|string',
-                'phone' => 'required|numeric|digits_between:10,13',
+                'brand_name'=> 'required|string',
+                'product_name'=> 'required|string',
+                'category' => 'required|in:sayur,buah,olahan_ayam,olahan_sapi,seafood,frozen_misc',
+                'origin' => 'required|in:lokal,import',
+                'price'=> 'required|numeric',
+                'stock' => 'required|numeric',
             ]);
             if ($validator->fails()) return response()->json(['error' => $validator->errors()], 400);
 
             $this->product->fill($data)->save();
             return response()->json($this->product, 200);
         }
+        // xml
         if($accHeader == 'application/xml' && $contentTypeHeader == 'application/xml') {
             $xmlString = $request->getContent();
             $xml = simplexml_load_string($xmlString);
             $data = json_decode(json_encode($xml), true);
 
             $validator = Validator::make($data, [
-                'email' => 'required|email|exists:users',
-                'password' => 'required',
-                'address'=> 'required|string',
-                'phone' => 'required|numeric|digits_between:10,13',
+                'brand_name'=> 'required|string',
+                'product_name'=> 'required|string',
+                'category' => 'required|in:sayur,buah,olahan_ayam,olahan_sapi,seafood,frozen_misc',
+                'origin' => 'required|in:lokal,import',
+                'price'=> 'required|numeric',
+                'stock' => 'required|numeric',
             ]);
             if ($validator->fails()) return response()->json(['error' => $validator->errors()], 400);
 
             $this->product->fill($data)->save();
             $xml = new \SimpleXMLElement('<Products/>');
-            foreach ($this->product->getAttributes() as $key => $value) {
+            foreach ($this->product->getAttributes() as $key => $value) 
+            {
                 $xml->addChild($key, $value);
             }
             return $xml->asXML();
+        }
+    }
+
+    public function delete($id)
+    {
+        try {
+            $product = Products::find($id);
+    
+            if (!$product) {
+                return response()->json(['message' => 'Product not found'], 404);
+            }
+    
+            $product->delete();
+    
+            return response()->json(['message' => 'Product deleted successfully'], 200);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Failed to delete product', 'error' => $e->getMessage()], 500);
         }
     }
 }
