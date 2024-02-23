@@ -15,9 +15,9 @@ class UsersController extends Controller{
         $accHeader = $request->headers->get('Accept');
         if($accHeader === '*/*' || empty($accHeader) ||
             ($accHeader != 'application/json' && $accHeader != 'application/xml')) {
-            return response('Not Accepttable', 404);
+            return response('Not Acceptable', 404);
         }
-        $this->users = $this->model::OrderBy("id", "DESC")->paginate(2)->toArray();
+        $this->users = $this->model::orderBy("id", "DESC")->paginate(2)->toArray();
         if($accHeader == 'application/json') {
             $response = [
                 'total_count' => $this->users['total'],
@@ -33,15 +33,16 @@ class UsersController extends Controller{
         }
         if($accHeader == 'application/xml') {
             $xml = new \SimpleXMLElement('<Users/>');
-            foreach($this->users->items('data') as $item) {
-                $xmlItem = $xml->addChild('Users');
-                foreach ($item->getAttributes() as $key => $value) {
+            foreach($this->users['data'] as $item) {
+                $xmlItem = $xml->addChild('User');
+                foreach ($item as $key => $value) {
                     $xmlItem->addChild($key, $value);
                 }
             }
             return $xml->asXML();
         }
     }
+    
 
     public function show(Request $request, $id) {
         $accHeader = $request->headers->get('Accept');
@@ -77,14 +78,33 @@ class UsersController extends Controller{
             'phone' => 'required|numeric|digits_between:10,13',
             'gender' => 'required|in:pria,wanita',
         ]);
-
-        if ($validator->fails()) return response()->json(['error' => $validator->errors()], 400);
-
+    
+        if ($validator->fails()) {
+            if ($request->wantsJson()) {
+                return response()->json(['error' => $validator->errors()], 400);
+            } else {
+                $xml = new \SimpleXMLElement('<error/>');
+                foreach ($validator->errors()->all() as $message) {
+                    $xml->addChild('message', $message);
+                }
+                return $xml->asXML();
+            }
+        }
+    
         $this->user = new User;
         $this->user->password = app('hash')->make($data['password']);
         $this->user->fill($data)->save();
-        return response()->json($this->user, 200);
-    }
+    
+        if ($request->wantsJson()) {
+            return response()->json($this->user, 200);
+        } else {
+            $xml = new \SimpleXMLElement('<user/>');
+            foreach ($this->user->toArray() as $key => $value) {
+                $xml->addChild($key, $value);
+            }
+            return $xml->asXML();
+        }
+    }    
 
     public function update(Request $request, $id) {
         $accHeader = $request->headers->get('Accept');
@@ -143,23 +163,51 @@ class UsersController extends Controller{
             'password' => 'required|string',
         ]);
 
-        if ($validator->fails()) return response()->json(['error' => $validator->errors()], 400);
+        if ($validator->fails()) {
+            if ($request->wantsJson()) {
+                return response()->json(['error' => $validator->errors()], 400);
+            } else {
+                return response('Validation failed', 400);
+            }
+        }
 
         $credentials = $request->only(['email', 'password']);
-        if (! $token = Auth::attempt($credentials)) return response()->json(['message' => 'Unauthorized'], 401);
+        if (! $token = Auth::attempt($credentials)) {
+            if ($request->wantsJson()) {
+                return response()->json(['message' => 'Unauthorized'], 401);
+            } else {
+                return response('Unauthorized', 401);
+            }
+        }
 
-        return response()->json([
-            'token' => $token,
-            'token_type' => 'bearer',
-            'expires_in' => Auth::factory()->setTTL(60)
-        ], 200);
+        if ($request->wantsJson()) {
+            return response()->json([
+                'token' => $token,
+                'token_type' => 'bearer',
+                'expires_in' => Auth::factory()->getTTL() * 60
+            ], 200);
+        } else {
+            $xml = new \SimpleXMLElement('<response/>');
+            $xml->addChild('token', $token);
+            $xml->addChild('token_type', 'bearer');
+            $xml->addChild('expires_in', Auth::factory()->getTTL() * 60);
+            return $xml->asXML();
+        }
     }
     
     public function logout(Request $request)
     {
-    Auth::logout();
-    return response()->json(['message' => 'Successfully logged out'], 200);
+        Auth::logout();
+    
+        if ($request->wantsJson()) {
+            return response()->json(['message' => 'Successfully logged out'], 200);
+        } else {
+            $xml = new \SimpleXMLElement('<response/>');
+            $xml->addChild('message', 'Successfully logged out');
+            return $xml->asXML();
+        }
     }
+    
     public function delete($id)
     {
         try {
