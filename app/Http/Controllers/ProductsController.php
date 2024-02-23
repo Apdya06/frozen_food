@@ -15,34 +15,37 @@ class ProductsController extends Controller{
         $accHeader = $request->headers->get('Accept');
         if($accHeader === '*/*' || empty($accHeader) ||
             ($accHeader != 'application/json' && $accHeader != 'application/xml')) {
-            return response('Not Accepttable', 404);
+            return response('Not Acceptable', 404);
         }
-        $this->products = $this->model::Where(['user_id' => Auth::user()->id])->OrderBy("id", "DESC")->paginate(2)->toArray();
+        
+        $products = $this->model::orderBy("id", "DESC")->paginate(2)->toArray();
+    
         if($accHeader == 'application/json') {
             $response = [
-                'total_count' => $this->products['total'],
-                'limit' =>  $this->products['per_page'],
+                'total_count' => $products['total'],
+                'limit' =>  $products['per_page'],
                 'pagination' => [
-                    'next_page' => $this->products['next_page_url'],
-                    'prev_page' => $this->products['prev_page_url'],
-                    'current_page' => $this->products['current_page'],
+                    'next_page' => $products['next_page_url'],
+                    'prev_page' => $products['prev_page_url'],
+                    'current_page' => $products['current_page'],
                 ],
-                'data' => $this->products['data']
+                'data' => $products['data']
             ];
             return response()->json($response, 200);
         }
+    
         if($accHeader == 'application/xml') {
             $xml = new \SimpleXMLElement('<Products/>');
-            foreach($this->products->items('data') as $item) {
-                $xmlItem = $xml->addChild('Users');
-                foreach ($item->getAttributes() as $key => $value) {
+            foreach($products['data'] as $item) {
+                $xmlItem = $xml->addChild('Product');
+                foreach ($item as $key => $value) {
                     $xmlItem->addChild($key, $value);
                 }
             }
             return $xml->asXML();
         }
     }
-
+    
     public function show(Request $request, $id) {
         $accHeader = $request->headers->get('Accept');
         if($accHeader === '*/*' || empty($accHeader) ||
