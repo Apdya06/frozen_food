@@ -19,8 +19,10 @@ $router->get('/', function () use ($router) {
 
 $router->get('users', 'UsersController@index');
 $router->get('users/{id}', 'UsersController@show');
+
 $router->get('products', 'ProductsController@index');
 $router->get('products/{id}', 'ProductsController@show');
+
 $router->post('users/register', 'UsersController@register');
 $router->post('users/login', 'UsersController@login');
 $router->post('users/logout', 'UsersController@logout');
